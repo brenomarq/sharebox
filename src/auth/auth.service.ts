@@ -8,10 +8,15 @@ import { UsersService } from 'src/users/users.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { LoginDto } from './dto/login.dto';
 import { compare } from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+import { access } from 'fs';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly userService: UsersService) {}
+  constructor(
+    private readonly userService: UsersService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async signUp(signUpDto: SignUpDto) {
     const existingUser = await this.userService.findByEmail(signUpDto.email);
@@ -39,6 +44,10 @@ export class AuthService {
 
     const payload = { sub: existingUser.id, role: existingUser.role };
 
-    return payload;
+    return {
+      access_token: await this.jwtService.signAsync(payload, {
+        secret: process.env.SECRET_KEY,
+      }),
+    };
   }
 }
