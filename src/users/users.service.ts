@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
@@ -12,11 +12,11 @@ export class UsersService {
     private readonly repository: Repository<User>,
   ) {}
 
-  async findByEmail(email: string) {
+  async findByEmail(email: string): Promise<User | null> {
     return this.repository.findOneBy({ email });
   }
 
-  async createUser(signUserDto: SignUpDto) {
+  async createUser(signUserDto: SignUpDto): Promise<User> {
     const hashedPassword: string = await hash(signUserDto.password, 10);
 
     const newUser = this.repository.create({
@@ -25,5 +25,22 @@ export class UsersService {
     });
 
     return await this.repository.save(newUser);
+  }
+
+  async findAllUsers(): Promise<User[]> {
+    return await this.repository.find({
+      select: ['id', 'email', 'role', 'createdAt'],
+    });
+  }
+
+  async findUserById(userId: number): Promise<User> {
+    const existingUser = await this.repository.findOne({
+      where: { id: userId },
+      select: ['id', 'email', 'role'],
+    });
+
+    if (!existingUser) throw new NotFoundException('User does not exist');
+
+    return existingUser;
   }
 }

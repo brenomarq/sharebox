@@ -10,6 +10,7 @@ import { LoginDto } from './dto/login.dto';
 import { compare } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { access } from 'fs';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async signUp(signUpDto: SignUpDto) {
+  async signUp(signUpDto: SignUpDto): Promise<User> {
     const existingUser = await this.userService.findByEmail(signUpDto.email);
 
     if (existingUser) throw new ConflictException('User already exists');
@@ -28,7 +29,7 @@ export class AuthService {
     return newUser;
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto): Promise<LoginResponse> {
     const existingUser = await this.userService.findByEmail(loginDto.email);
 
     if (!existingUser) throw new NotFoundException('User does not exist');
@@ -50,4 +51,8 @@ export class AuthService {
       }),
     };
   }
+}
+
+export interface LoginResponse {
+  access_token: string;
 }
