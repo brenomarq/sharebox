@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { SignUpDto } from 'src/auth/dto/sign-up.dto';
+import { hash } from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -16,7 +17,13 @@ export class UsersService {
   }
 
   async createUser(signUserDto: SignUpDto) {
-    const newUser = this.repository.create(signUserDto);
+    const hashedPassword: string = await hash(signUserDto.password, 10);
+
+    const newUser = this.repository.create({
+      ...signUserDto,
+      password: hashedPassword,
+    });
+
     return await this.repository.save(newUser);
   }
 }

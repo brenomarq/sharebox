@@ -1,7 +1,13 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { SignUpDto } from './dto/sign-up.dto';
-import { User } from 'src/users/entities/user.entity';
+import { LoginDto } from './dto/login.dto';
+import { compare } from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -15,5 +21,24 @@ export class AuthService {
     const newUser = await this.userService.createUser(signUpDto);
 
     return newUser;
+  }
+
+  async login(loginDto: LoginDto) {
+    const existingUser = await this.userService.findByEmail(loginDto.email);
+
+    if (!existingUser) throw new NotFoundException('User does not exist');
+
+    const matchPassword: boolean = await compare(
+      loginDto.password,
+      existingUser.password,
+    );
+
+    if (!matchPassword) {
+      throw new UnauthorizedException('Passwords do not match');
+    }
+
+    const payload = { sub: existingUser.id, role: existingUser.role };
+
+    return payload;
   }
 }
