@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Item } from 'src/items/entities/item.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -24,4 +25,7 @@ export class User {
 
   @Column({ default: new Date().toISOString() })
   createdAt: string;
+
+  @OneToMany(() => Item, (item) => item.owner, { cascade: true })
+  items: Item[];
 }
