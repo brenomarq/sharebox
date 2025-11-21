@@ -124,7 +124,7 @@ describe('UsersService', () => {
     expect(result).toEqual(user);
     expect(mockRepository.findOne).toHaveBeenCalledWith({
       where: { id: 1 },
-      select: ['id', 'email', 'role'],
+      select: ['id', 'email', 'role', 'score'],
     });
   });
 
@@ -132,5 +132,40 @@ describe('UsersService', () => {
     mockRepository.findOne.mockResolvedValue(null);
 
     await expect(service.findUserById(99)).rejects.toThrow(NotFoundException);
+  });
+
+  // ------------------------------------------- //
+  // increasePoints
+  // ------------------------------------------- //
+  it('should increase user points correctly', async () => {
+    // Arrange
+    const userId = 1;
+    const points = 50;
+
+    const existingUser = {
+      id: userId,
+      email: 'test@example.com',
+      score: 100,
+    };
+
+    jest.spyOn(service, 'findUserById').mockResolvedValue(existingUser as any);
+
+    const saveMock = jest
+      .spyOn(repository, 'save')
+      .mockImplementation(async (user) => user as User);
+
+    // Act
+    const result = await service.increasePoints(userId, points);
+
+    // Assert
+    expect(service.findUserById).toHaveBeenCalledWith(userId);
+
+    expect(saveMock).toHaveBeenCalledWith({
+      id: 1,
+      email: 'test@example.com',
+      score: 150, // 100 + 50
+    });
+
+    expect(result.score).toBe(150);
   });
 });

@@ -36,11 +36,19 @@ export class UsersService {
   async findUserById(userId: number): Promise<User> {
     const existingUser = await this.repository.findOne({
       where: { id: userId },
-      select: ['id', 'email', 'role'],
+      select: ['id', 'email', 'role', 'score'],
     });
 
     if (!existingUser) throw new NotFoundException('User does not exist');
 
     return existingUser;
+  }
+
+  async increasePoints(userId: number, points: number) {
+    const user = await this.findUserById(userId);
+
+    Object.assign(user, { score: user.score + points });
+
+    return this.repository.save(user);
   }
 }
